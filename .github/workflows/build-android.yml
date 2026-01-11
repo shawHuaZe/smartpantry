@@ -7,6 +7,9 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,7 +40,6 @@ jobs:
 
     - name: Build frontend with API URL
       run: |
-        echo "VITE_API_URL=https://smartpantry-9xvp.onrender.com" >> $GITHUB_ENV
         echo "Building frontend with Render backend..."
         npm run build
       env:
@@ -52,35 +54,24 @@ jobs:
     - name: Build Debug APK
       run: |
         cd android
-        ./gradlew assembleDebug
-
-    - name: Build Release APK
-      run: |
-        cd android
-        ./gradlew assembleRelease
+        ./gradlew assembleDebug --stacktrace
 
     - name: Upload Debug APK
       uses: actions/upload-artifact@v4
       with:
         name: smartpantry-debug
         path: android/app/build/outputs/apk/debug/app-debug.apk
-
-    - name: Upload Release APK
-      uses: actions/upload-artifact@v4
-      with:
-        name: smartpantry-release
-        path: android/app/build/outputs/apk/release/app-release.apk
+        if-no-files-found: error
 
     - name: Create Release
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
       uses: softprops/action-gh-release@v1
       with:
-        files: |
-          android/app/build/outputs/apk/debug/app-debug.apk
-          android/app/build/outputs/apk/release/app-release.apk
+        files: android/app/build/outputs/apk/debug/app-debug.apk
         tag_name: v${{ github.run_number }}
         name: SmartPantry Android APK v${{ github.run_number }}
         draft: false
         prerelease: false
+        generate_release_notes: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
