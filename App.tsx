@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import { Capacitor } from '@capacitor/core';
+import { App as CapacitorApp } from '@capacitor/app';
 import { ViewState } from './types';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -34,6 +36,30 @@ const App: React.FC = () => {
         }
     }, []);
 
+    // 处理 Android 返回键
+    useEffect(() => {
+        const setupBackButton = async () => {
+            if (!Capacitor.isNativePlatform()) return;
+
+            await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
+                if (canGoBack) {
+                    // 如果可以返回，返回上一页
+                    handleBack();
+                } else {
+                    // 如果不能返回，退出应用
+                    CapacitorApp.exitApp();
+                }
+            });
+        };
+
+        setupBackButton();
+
+        return () => {
+            // 清理监听器
+            CapacitorApp.removeAllListeners();
+        };
+    }, [currentView]);
+
     const handleNavigate = useCallback((view: ViewState, itemId?: string) => {
         const currentViewValue = currentViewRef.current;
 
@@ -54,6 +80,33 @@ const App: React.FC = () => {
 
         setCurrentView(view);
     }, []);
+
+    // 处理返回操作
+    const handleBack = useCallback(() => {
+        const view = currentViewRef.current;
+
+        switch (view) {
+            case ViewState.ITEM_DETAIL:
+                setCurrentView(previousView);
+                break;
+            case ViewState.INVENTORY_LIST:
+                setCurrentView(ViewState.INVENTORY_CATEGORIES);
+                break;
+            case ViewState.BATCH_ENTRY:
+            case ViewState.SCAN:
+                setCurrentView(ViewState.HOME);
+                break;
+            case ViewState.LOGIN:
+                // 登录页按返回键不做任何操作
+                break;
+            default:
+                // 其他页面返回首页
+                if (view !== ViewState.HOME) {
+                    setCurrentView(ViewState.HOME);
+                }
+                break;
+        }
+    }, [previousView]);
 
     // Determines if the bottom nav should be visible
     const showBottomNav = useMemo(() => [

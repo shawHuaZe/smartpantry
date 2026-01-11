@@ -2,6 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ViewState } from '../types';
 import { itemsAPI } from '../utils/api';
 
+// 正确的 API 基础 URL
+const API_BASE_URL = import.meta.env.VITE_API_URL
+  ? `${import.meta.env.VITE_API_URL}/api`
+  : 'http://localhost:3001/api';
+
 interface BatchEntryProps {
     onBack: () => void;
     onScan: () => void;
@@ -98,7 +103,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
         }]);
 
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/understand-text`, {
+            const response = await fetch(`${API_BASE_URL}/ai/understand-text`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -153,7 +158,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
     // 为物品生成图片
     const generateImageForItem = async (item: RecognizedItem): Promise<string> => {
         try {
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/generate-image`, {
+            const response = await fetch(`${API_BASE_URL}/ai/generate-image`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -189,7 +194,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
         setGeneratingImageId(editingItem.id);
         try {
             // 使用异步API，立即返回
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/generate-image-async`, {
+            const response = await fetch(`${API_BASE_URL}/ai/generate-image-async`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -289,7 +294,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
             // 压缩图片
             const compressedImage = await compressImage(file, 1024, 0.7);
 
-            const response = await fetch(`${import.meta.env.VITE_API_URL}/ai/recognize-receipt`, {
+            const response = await fetch(`${API_BASE_URL}/ai/recognize-receipt`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -464,7 +469,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
 
             // 后台提交图片生成任务（不阻塞）
             for (const item of itemsToGenerateImages) {
-                fetch(`${import.meta.env.VITE_API_URL}/ai/generate-image-async`, {
+                fetch(`${API_BASE_URL}/ai/generate-image-async`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -537,6 +542,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                capture="environment"
                 style={{ display: 'none' }}
                 onChange={handleImageUpload}
             />
