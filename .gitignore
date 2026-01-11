@@ -44,3 +44,16 @@ coverage/
 # OS files
 Thumbs.db
 Desktop.ini
+
+# Capacitor
+.capacitor/
+
+# Android build outputs
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/*.iml
+android/.idea/
+android/captures/
+android/app/release/

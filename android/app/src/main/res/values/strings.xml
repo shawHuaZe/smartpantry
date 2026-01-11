@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">SmartPantry</string>
+    <string name="title_activity_main">SmartPantry</string>
+    <string name="package_name">com.smartpantry.app</string>
+    <string name="custom_url_scheme">com.smartpantry.app</string>
+</resources>
