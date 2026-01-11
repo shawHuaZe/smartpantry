@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { ViewState } from '../types';
 import { authAPI } from '../utils/api';
+import { useConfirm } from '../components/ConfirmDialog';
 
 interface SettingsProps {
     onChangeView?: (view: ViewState) => void;
 }
 
 const Settings: React.FC<SettingsProps> = ({ onChangeView }) => {
+    const { showConfirm } = useConfirm();
     const [userInfo, setUserInfo] = useState<{ email: string; username: string } | null>(null);
 
     useEffect(() => {
@@ -23,14 +25,21 @@ const Settings: React.FC<SettingsProps> = ({ onChangeView }) => {
     };
 
     const handleLogout = () => {
-        if (window.confirm('确定要退出登录吗？')) {
-            authAPI.logout();
-            if (onChangeView) {
-                onChangeView(ViewState.LOGIN);
-            } else {
-                window.location.reload();
+        showConfirm({
+            title: '退出登录',
+            message: '确定要退出登录吗？',
+            confirmText: '退出',
+            cancelText: '取消',
+            type: 'danger',
+            onConfirm: () => {
+                authAPI.logout();
+                if (onChangeView) {
+                    onChangeView(ViewState.LOGIN);
+                } else {
+                    window.location.reload();
+                }
             }
-        }
+        });
     };
 
     return (

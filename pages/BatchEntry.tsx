@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ViewState } from '../types';
 import { itemsAPI } from '../utils/api';
+import { useToast } from '../components/Toast';
+import { useConfirm } from '../components/ConfirmDialog';
 
 // 正确的 API 基础 URL
 const API_BASE_URL = import.meta.env.VITE_API_URL
@@ -26,6 +28,9 @@ interface RecognizedItem {
 }
 
 const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
+    const { showToast } = useToast();
+    const { showConfirm } = useConfirm();
+
     const [recognizedItems, setRecognizedItems] = useState<RecognizedItem[]>([]);
     const [textInput, setTextInput] = useState('');
     const [isProcessing, setIsProcessing] = useState(false);
@@ -148,7 +153,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
             }
         } catch (error: any) {
             console.error('AI识别失败:', error);
-            alert(`识别失败: ${error.message}`);
+            showToast(`识别失败: ${error.message}`, 'error');
             // 移除占位项
             setRecognizedItems(prev => prev.filter(item => item.id !== placeholderId));
         } finally {
@@ -226,10 +231,10 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
                 // 关闭编辑弹窗
                 setEditingItem(null);
 
-                alert('图片生成任务已提交，将在后台处理，稍后可在库存中查看');
+                showToast('图片生成任务已提交，将在后台处理，稍后可在库存中查看', 'success');
             }
         } catch (error: any) {
-            alert(`图片生成任务提交失败: ${error.message}`);
+            showToast(`图片生成任务提交失败: ${error.message}`, 'error');
         } finally {
             setGeneratingImageId(null);
         }
@@ -259,7 +264,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
             }));
         } catch (error) {
             console.error('图片上传失败:', error);
-            alert('图片上传失败，请重试');
+            showToast('图片上传失败，请重试', 'error');
         }
 
         // 重置input
@@ -269,13 +274,21 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
     // 处理拍照
     const handleCamera = () => {
         // 弹出选择框：拍实物还是拍小票
-        if (window.confirm('拍照类型：\n\n确定 = 拍实物照片（保存照片）\n取消 = 拍小票/发票（不保存，AI生成）')) {
-            setPhotoType('item'); // 拍实物
-        } else {
-            setPhotoType('receipt'); // 拍小票
-        }
-        // 触发文件选择
-        fileInputRef.current?.click();
+        showConfirm({
+            title: '选择拍照类型',
+            message: '请选择拍照类型：\n\n• 拍实物照片 - 保存照片到物品\n• 拍小票/发票 - 不保存照片，AI自动生成',
+            confirmText: '拍实物',
+            cancelText: '拍小票',
+            type: 'info',
+            onConfirm: () => {
+                setPhotoType('item');
+                fileInputRef.current?.click();
+            },
+            onCancel: () => {
+                setPhotoType('receipt');
+                fileInputRef.current?.click();
+            }
+        });
     };
 
     // 处理图片上传
@@ -345,7 +358,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
             }
         } catch (error: any) {
             console.error('图片识别失败:', error);
-            alert(`识别失败: ${error.message}`);
+            showToast(`识别失败: ${error.message}`, 'error');
             setRecognizedItems(prev => prev.filter(item => item.id !== placeholderId));
         } finally {
             setIsProcessing(false);
@@ -385,7 +398,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
                 recognition.onerror = (event: any) => {
                     console.error('语音识别错误:', event.error);
                     setIsListening(false);
-                    alert('语音识别失败，请重试');
+                    showToast('语音识别失败，请重试', 'error');
                 };
 
                 recognition.onend = () => {
@@ -398,7 +411,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
         }
 
         // 浏览器不支持语音识别
-        alert('您的浏览器不支持语音识别，请使用Chrome浏览器');
+        showToast('您的浏览器不支持语音识别，请使用Chrome浏览器', 'warning');
     };
 
     // 打开编辑弹窗
@@ -439,7 +452,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
     // 处理确认入库
     const handleConfirmBatch = async () => {
         if (recognizedItems.length === 0) {
-            alert('请先添加物品');
+            showToast('请先添加物品', 'warning');
             return;
         }
 
@@ -500,11 +513,11 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
             const imageMessage = itemsToGenerateImages.length > 0
                 ? `，${itemsToGenerateImages.length} 张图片将在后台生成`
                 : '';
-            alert(`成功入库 ${successCount} 件物品！${imageMessage}`);
+            showToast(`成功入库 ${successCount} 件物品！${imageMessage}`, 'success');
             onBack();
         } catch (error) {
             console.error('批量入库失败:', error);
-            alert('入库失败，请重试');
+            showToast('入库失败，请重试', 'error');
         }
     };
 
@@ -512,9 +525,16 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
     const handleClearList = () => {
         if (recognizedItems.length === 0) return;
 
-        if (window.confirm('确定要清空列表吗？')) {
-            setRecognizedItems([]);
-        }
+        showConfirm({
+            title: '清空列表',
+            message: '确定要清空所有已识别的物品吗？',
+            confirmText: '清空',
+            cancelText: '取消',
+            type: 'warning',
+            onConfirm: () => {
+                setRecognizedItems([]);
+            }
+        });
     };
 
     // 删除单项

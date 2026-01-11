@@ -14,14 +14,18 @@ import InventoryCategories from './pages/InventoryCategories';
 import InventoryList from './pages/InventoryList';
 import BatchEntry from './pages/BatchEntry';
 import BottomNav from './components/BottomNav';
+import { ToastProvider } from './components/Toast';
+import { ConfirmProvider, useConfirm } from './components/ConfirmDialog';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
     const [currentView, setCurrentView] = useState<ViewState>(ViewState.LOGIN);
     const [previousView, setPreviousView] = useState<ViewState>(ViewState.HOME);
     const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
     const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
     const [scanSource, setScanSource] = useState<ViewState | null>(null);
     const currentViewRef = useRef<ViewState>(currentView);
+    const { showConfirm } = useConfirm();
+    const exitConfirmationRef = useRef(false);
 
     // 更新ref
     useEffect(() => {
@@ -42,12 +46,30 @@ const App: React.FC = () => {
             if (!Capacitor.isNativePlatform()) return;
 
             await CapacitorApp.addListener('backButton', ({ canGoBack }) => {
-                if (canGoBack) {
+                const view = currentViewRef.current;
+
+                // 如果已经在首页，显示退出确认
+                if (view === ViewState.HOME && !canGoBack) {
+                    if (!exitConfirmationRef.current) {
+                        exitConfirmationRef.current = true;
+                        showConfirm({
+                            title: '退出应用',
+                            message: '确定要退出智能储物柜吗？',
+                            confirmText: '退出',
+                            cancelText: '取消',
+                            type: 'danger',
+                            onConfirm: () => {
+                                CapacitorApp.exitApp();
+                                exitConfirmationRef.current = false;
+                            },
+                            onCancel: () => {
+                                exitConfirmationRef.current = false;
+                            }
+                        });
+                    }
+                } else if (canGoBack) {
                     // 如果可以返回，返回上一页
                     handleBack();
-                } else {
-                    // 如果不能返回，退出应用
-                    CapacitorApp.exitApp();
                 }
             });
         };
@@ -58,7 +80,7 @@ const App: React.FC = () => {
             // 清理监听器
             CapacitorApp.removeAllListeners();
         };
-    }, [currentView]);
+    }, [showConfirm]);
 
     const handleNavigate = useCallback((view: ViewState, itemId?: string) => {
         const currentViewValue = currentViewRef.current;
@@ -191,6 +213,16 @@ const App: React.FC = () => {
                 <BottomNav activeView={currentView} onChangeView={handleNavigate} />
             )}
         </div>
+    );
+};
+
+const App: React.FC = () => {
+    return (
+        <ToastProvider>
+            <ConfirmProvider>
+                <AppContent />
+            </ConfirmProvider>
+        </ToastProvider>
     );
 };
 
