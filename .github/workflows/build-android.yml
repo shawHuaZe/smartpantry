@@ -35,8 +35,13 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Build frontend
-      run: npm run build
+    - name: Build frontend with API URL
+      run: |
+        echo "VITE_API_URL=https://smartpantry-9xvp.onrender.com" >> $GITHUB_ENV
+        echo "Building frontend with Render backend..."
+        npm run build
+      env:
+        VITE_API_URL: https://smartpantry-9xvp.onrender.com
 
     - name: Sync Capacitor
       run: npx cap sync android
