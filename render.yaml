@@ -10,13 +10,12 @@ services:
         value: production
       - key: PORT
         value: 3001
-      # 以下变量需要在 Render 控制台配置
+      # 以下变量需要在 Render 控制台手动配置
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_ANON_KEY
         sync: false
       - key: JWT_SECRET
         sync: false
-        generateValue: true
       - key: DASHSCOPE_API_KEY
         sync: false
