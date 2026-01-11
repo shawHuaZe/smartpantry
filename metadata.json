@@ -1,0 +1,7 @@
+{
+  "name": "SmartPantry",
+  "description": "An intelligent inventory management app with AI scanning, shopping lists, and consumption statistics.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

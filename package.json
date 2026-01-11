@@ -1,0 +1,25 @@
+{
+  "name": "smartpantry",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:all": "npm run dev:server & npm run dev",
+    "dev:server": "cd server && npm run dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "install:all": "npm install && cd server && npm install"
+  },
+  "dependencies": {
+    "react": "^19.2.3",
+    "recharts": "^3.6.0",
+    "react-dom": "^19.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}
