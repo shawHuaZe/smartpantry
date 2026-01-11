@@ -32,6 +32,7 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
     const [isListening, setIsListening] = useState(false);
     const [editingItem, setEditingItem] = useState<RecognizedItem | null>(null);
     const [generatingImageId, setGeneratingImageId] = useState<string | null>(null);
+    const [photoType, setPhotoType] = useState<'item' | 'receipt'>('receipt'); // 拍照类型
     const [editForm, setEditForm] = useState({
         name: '',
         price: 0,
@@ -267,6 +268,12 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
 
     // 处理拍照
     const handleCamera = () => {
+        // 弹出选择框：拍实物还是拍小票
+        if (window.confirm('拍照类型：\n\n确定 = 拍实物照片（保存照片）\n取消 = 拍小票/发票（不保存，AI生成）')) {
+            setPhotoType('item'); // 拍实物
+        } else {
+            setPhotoType('receipt'); // 拍小票
+        }
         // 触发文件选择
         fileInputRef.current?.click();
     };
@@ -325,8 +332,8 @@ const BatchEntry: React.FC<BatchEntryProps> = ({ onBack, onScan }) => {
                         quantity: item.quantity,
                         quantityNumber,
                         expiryDate: '',
-                        // 不保存发票图片，后续会自动生成写实图
-                        image: undefined
+                        // 如果是实物照片就保存，如果是小票就不保存（后续AI生成）
+                        image: photoType === 'item' ? compressedImage : undefined
                     };
                 });
 
